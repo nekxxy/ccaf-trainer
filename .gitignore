@@ -1,0 +1,8 @@
+server.log
+.DS_Store
+Thumbs.db
+
+# Source PDF is CertyIQ "Premium exam material" (likely paid content) plus raw
+# derived text dumps of it. Not needed at runtime (app only loads data.js) and
+# not ours to redistribute publicly. Remove this line if you have rights to publish it.
+question dump/
