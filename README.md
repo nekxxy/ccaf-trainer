@@ -10,9 +10,9 @@ A static, 100% client-side study app for drilling practice questions for the **C
   3. Context & Conversation Management
   4. Multi-Agent Orchestration
   5. Claude Code & Agentic Engineering
-- Sequential category unlocking (100% pass on one category unlocks the next)
+- All categories are unlocked from the start — study them in any order
 - Study mode, Timed Challenge mode, and Retry-missed-only drilling
-- **Two-strike answers**: a wrong first pick shows why that specific choice is wrong and lets you try again before revealing the full answer. Only the first attempt counts toward streaks and the 100%-pass unlock bar — the second chance is a learning aid, not a way to game the score.
+- **Two-strike answers**: a wrong first pick shows why that specific choice is wrong and lets you try again before revealing the full answer. Only the first attempt counts toward streaks and marking a category passed — the second chance is a learning aid, not a way to game the score.
 - A per-category **Key Concepts** primer (original explanatory content, not exam text) before drilling
 - Distinct accent color + icon per category, all icons rendered as inline SVG (no emoji)
 - An access-code gate ("CCAF") after name entry during onboarding, since this is for internal use only
@@ -99,7 +99,7 @@ Each category's primer cards are **not** derived from the exam dump — they're 
 Everything is namespaced under two `localStorage` keys:
 
 - `ccaf_trainer_v1_profile` — name, onboarding acknowledgments, theme preference
-- `ccaf_trainer_v1_progress` — per-category attempts/best score/unlock state, per-question history, streaks, badges, accuracy history
+- `ccaf_trainer_v1_progress` — per-category attempts/best score/pass state, per-question history, streaks, badges, accuracy history
 
 There is no account system and no server. Clearing browser data, using a different browser, or switching devices resets progress. Users can also reset manually from **About → Reset all progress**.
 

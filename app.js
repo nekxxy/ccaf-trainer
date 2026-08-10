@@ -112,9 +112,9 @@
     localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
   }
 
-  function defaultCategoryProgress(isFirst) {
+  function defaultCategoryProgress() {
     return {
-      unlocked: !!isFirst,
+      unlocked: true,
       passed: false,
       hadFailedAttempt: false,
       bestScorePct: 0,
@@ -126,8 +126,8 @@
 
   function defaultProgress() {
     var categories = {};
-    CATEGORIES.forEach(function (cat, i) {
-      categories[cat.id] = defaultCategoryProgress(i === 0);
+    CATEGORIES.forEach(function (cat) {
+      categories[cat.id] = defaultCategoryProgress();
     });
     return {
       categories: categories,
@@ -141,9 +141,13 @@
 
   function ensureProgressShape(p) {
     if (!p.categories) p.categories = {};
-    CATEGORIES.forEach(function (cat, i) {
+    CATEGORIES.forEach(function (cat) {
       if (!p.categories[cat.id]) {
-        p.categories[cat.id] = defaultCategoryProgress(i === 0 && !anyUnlocked(p));
+        p.categories[cat.id] = defaultCategoryProgress();
+      } else {
+        // All categories are unlocked for everyone; existing users keep
+        // their passed/score/streak history, only the lock state changes.
+        p.categories[cat.id].unlocked = true;
       }
     });
     if (!p.streak) p.streak = { current: 0, best: 0 };
@@ -151,15 +155,7 @@
     if (typeof p.totalCorrect !== 'number') p.totalCorrect = 0;
     if (!p.badges) p.badges = [];
     if (!p.history) p.history = [];
-    // Ensure at least category 0 is unlocked
-    if (CATEGORIES.length && !anyUnlocked(p)) {
-      p.categories[CATEGORIES[0].id].unlocked = true;
-    }
     return p;
-  }
-
-  function anyUnlocked(p) {
-    return Object.keys(p.categories).some(function (k) { return p.categories[k].unlocked; });
   }
 
   function loadProgress() {
@@ -243,11 +239,6 @@
       if (CATEGORIES[i].id === catId) return CATEGORIES[i];
     }
     return null;
-  }
-
-  function categoryIndex(catId) {
-    for (var i = 0; i < CATEGORIES.length; i++) if (CATEGORIES[i].id === catId) return i;
-    return -1;
   }
 
   function overallCompletionPct() {
@@ -362,7 +353,7 @@
         bindCategories();
         break;
       case 'study':
-        var targetCatId = pendingCategoryId || (CATEGORIES.find(function (c) { return progress.categories[c.id].unlocked && !progress.categories[c.id].passed; }) || CATEGORIES[0]).id;
+        var targetCatId = pendingCategoryId || (CATEGORIES.find(function (c) { return !progress.categories[c.id].passed; }) || CATEGORIES[0]).id;
         appEl.innerHTML = renderModeSelect(targetCatId);
         bindModeSelect(targetCatId);
         break;
@@ -505,7 +496,6 @@
       return cp.questionStats[qid].lastResult === 'correct';
     }).length;
     return {
-      unlocked: cp.unlocked,
       passed: cp.passed,
       bestScorePct: cp.bestScorePct,
       attemptsCount: cp.attemptsCount,
@@ -519,27 +509,20 @@
   function renderCategories() {
     var cards = CATEGORIES.map(function (cat, i) {
       var st = categoryStats(cat);
-      var stateClass = st.unlocked ? '' : 'locked';
       var actionBtn;
-      if (!st.unlocked) {
-        actionBtn = '<button class="btn btn-secondary btn-block" disabled>Locked</button>';
-      } else if (st.passed) {
+      if (st.passed) {
         actionBtn = '<button class="btn btn-secondary btn-block" data-start="' + cat.id + '">Review again</button>';
       } else if (st.attemptsCount > 0) {
         actionBtn = '<button class="btn btn-primary btn-block" data-start="' + cat.id + '">Continue</button>';
       } else {
         actionBtn = '<button class="btn btn-primary btn-block" data-start="' + cat.id + '">Start</button>';
       }
-      var prevCat = i > 0 ? CATEGORIES[i - 1] : null;
-      var tooltip = st.unlocked ? '' :
-        '<div class="tooltip-bubble">Score 100% on "' + escapeHtml(prevCat ? prevCat.name : '') + '" in one attempt to unlock.</div>';
       var badgeStyle = 'style="background:' + cat.color + '22;color:' + cat.color + '"';
 
       return (
-        '<div class="cat-card ' + stateClass + ' tooltip-wrap" style="--cat-color:' + cat.color + '">' +
-          tooltip +
+        '<div class="cat-card" style="--cat-color:' + cat.color + '">' +
           '<div class="cat-top">' +
-            '<div class="cat-icon-badge" ' + badgeStyle + '>' + icon(st.unlocked ? cat.icon : 'lock', { size: 20 }) + '</div>' +
+            '<div class="cat-icon-badge" ' + badgeStyle + '>' + icon(cat.icon, { size: 20 }) + '</div>' +
             (st.passed ? '<span class="pass-badge">' + icon('check', { size: 12 }) + ' Passed</span>' : '')  +
           '</div>' +
           '<div>' +
@@ -954,11 +937,6 @@
             awardBadge('perfectionist');
           }
           if (quizSession.mode === 'timed') awardBadge('speed_runner');
-          // Unlock next category
-          var idx = categoryIndex(quizSession.catId);
-          if (idx !== -1 && idx + 1 < CATEGORIES.length) {
-            progress.categories[CATEGORIES[idx + 1].id].unlocked = true;
-          }
           if (CATEGORIES.every(function (c) { return progress.categories[c.id].passed; })) {
             awardBadge('course_champion');
           }
@@ -994,9 +972,9 @@
     var missed = quizSession.totalUnique - quizSession.correctFirstTryCount;
     var passLine = quizSession.isFullRun
       ? (scorePct === 100
-          ? (quizSession.justPassed ? 'Category unlocked the next one.' : 'Perfect run — category already passed.')
-          : 'Score 100% in one full attempt to unlock the next category.')
-      : 'This was a partial drill — it does not count toward unlocking categories.';
+          ? (quizSession.justPassed ? 'Category passed!' : 'Perfect run — category already passed.')
+          : 'Score 100% in one full attempt to mark this category passed.')
+      : 'This was a partial drill — it does not count toward passing the category.';
 
     var actions = '<button class="btn btn-secondary" id="backToCatsBtn">Back to categories</button>';
     if (missed > 0 && quizSession.mode !== 'retry') {
@@ -1042,7 +1020,7 @@
     var rows = CATEGORIES.map(function (cat, i) {
       var cp = progress.categories[cat.id];
       var status = cp.passed ? '<span class="status-pill status-pass">Passed</span>' :
-        (cp.unlocked ? '<span class="status-pill status-progress">In progress</span>' : '<span class="status-pill status-locked">Locked</span>');
+        '<span class="status-pill status-progress">In progress</span>';
       return (
         '<tr>' +
           '<td>' + (i + 1) + '. ' + escapeHtml(cat.name) + '</td>' +
