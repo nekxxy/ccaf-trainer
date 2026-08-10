@@ -427,8 +427,6 @@ a { color: var(--accent); }
   opacity: 0.7;
 }
 .cat-card:hover { border-color: var(--cat-color, var(--border-strong)); transform: translateY(-2px); }
-.cat-card.locked { opacity: 0.55; }
-.cat-card.locked::before { background: var(--border-strong); opacity: 1; }
 .cat-card .cat-top {
   display: flex;
   justify-content: space-between;
@@ -491,28 +489,6 @@ a { color: var(--accent); }
   text-align: right;
 }
 
-.tooltip-wrap { position: relative; }
-.tooltip-wrap .tooltip-bubble {
-  position: absolute;
-  bottom: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-strong);
-  color: var(--text);
-  font-size: 12px;
-  padding: 8px 12px;
-  border-radius: var(--radius-sm);
-  width: 220px;
-  text-align: center;
-  box-shadow: var(--shadow);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.15s;
-  z-index: 5;
-}
-.tooltip-wrap:hover .tooltip-bubble { opacity: 1; }
-
 /* ============ Tables ============ */
 .data-table-wrap {
   overflow-x: auto;
@@ -552,7 +528,6 @@ table.data-table tr:hover td { background: var(--bg-card-hover); }
 }
 .status-pass { background: #2ECC7122; color: var(--green); }
 .status-progress { background: var(--accent-dim); color: var(--accent); }
-.status-locked { background: var(--border); color: var(--text-faint); }
 
 /* ============ Stats row ============ */
 .stat-row {
